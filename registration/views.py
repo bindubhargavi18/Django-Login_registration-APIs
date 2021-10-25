@@ -1,52 +1,47 @@
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import User
-from django.core.exceptions import FieldDoesNotExist, ValidationError
 from django.db import IntegrityError
-from django.http import JsonResponse
-from .models import UserDetails
-import json
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .serializers import UserDetailsSerializer
 
 
-def user_register(request):
+class Register(APIView):
     """
-    This method register user by inheriting User Model into our own model.
-    Using create_user method, storing details into database.
-    Returns response whether user registered or not.
+    This class registers new user based on the details...
     """
-    if request.method == 'POST':
+    def post(self, request):
         try:
-            data = json.loads(request.body)
-            user = UserDetails.objects.create_user(data.get('username'), data.get('email'), data.get('password'),
-                                                   address=data.get('address'), city=data.get('city'),
-                                                   state=data.get('state'))
-            msg = {'message': 'new user registered successfully..'}
-            return JsonResponse(msg)
+            serializer = UserDetailsSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({"Message": "user registered successfully"}, status=status.HTTP_201_CREATED)
+
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
         except IntegrityError:
-            exception = {'Exception': 'Already exists...!'}
-            return JsonResponse(exception)
+            return Response("Exception: Username already exists!")
+
         except Exception as e:
-            exc = {'Exception': str(e)}
-            return JsonResponse(exc)
+            return Response({'Exception': str(e)})
 
 
-def user_login(request):
+class Login(APIView):
     """
-    This method logins based on username and password by using authenticate method.
-    Returns response login is success or failed...
+    This class creates login api and validate user based on details.
+    Returns response of login success or fail.
     """
-    try:
-        if request.method == 'POST':
-            data = json.loads(request.body)
-            user = authenticate(username=data.get('username'), password=data.get('password'))
+    def post(self, request):
+        try:
+            user = authenticate(username=request.data.get('username'), password=request.data.get('password'))
             if user is not None:
-                data = {'message': 'successfully logged in..'}
-                return JsonResponse(data)
+                return Response("Login successful..", status=status.HTTP_202_ACCEPTED)
             else:
-                data = {'message': 'username or password is wrong..'}
-                return JsonResponse(data)
-    except ValidationError:
-        exc_value = {'Exception': 'Values does not exists'}
-        return JsonResponse(exc_value)
-    except Exception as e:
-        value = {'Exception': str(e)}
-        return JsonResponse(value)
+                return Response("username or password is wrong..!", status=status.HTTP_400_BAD_REQUEST)
+
+        except AuthenticationFailed:
+            return Response("Exception: Authentication failed..", status=status.HTTP_401_UNAUTHORIZED)
+
+        except Exception as e:
+            return Response({'Exception': str(e)})
