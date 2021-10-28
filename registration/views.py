@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .serializers import UserDetailsSerializer
+import jwt
 
 
 class Register(APIView):
@@ -36,7 +37,9 @@ class Login(APIView):
         try:
             user = authenticate(username=request.data.get('username'), password=request.data.get('password'))
             if user is not None:
+
                 return Response("Login successful..", status=status.HTTP_202_ACCEPTED)
+
             else:
                 return Response("username or password is wrong..!", status=status.HTTP_400_BAD_REQUEST)
 
