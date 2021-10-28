@@ -1,3 +1,4 @@
+import jwt
 from django.contrib.auth import authenticate
 from django.db import IntegrityError
 from rest_framework.exceptions import AuthenticationFailed
@@ -36,7 +37,8 @@ class Login(APIView):
         try:
             user = authenticate(username=request.data.get('username'), password=request.data.get('password'))
             if user is not None:
-                return Response("Login successful..", status=status.HTTP_202_ACCEPTED)
+                token = jwt.encode({"id": user.id}, 'secret', algorithm='HS256')
+                return Response({"token": token})
             else:
                 return Response("username or password is wrong..!", status=status.HTTP_400_BAD_REQUEST)
 
