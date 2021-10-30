@@ -1,4 +1,3 @@
-import jwt
 from django.contrib.auth import authenticate
 from django.db import IntegrityError
 from rest_framework.exceptions import AuthenticationFailed
@@ -18,15 +17,15 @@ class Register(APIView):
             serializer = UserDetailsSerializer(data=request.data)
             if serializer.is_valid():
                 serializer.save()
-                return Response({"Message": "user registered successfully"}, status=status.HTTP_201_CREATED)
+                return Response({"message": "user registered successfully"}, status=status.HTTP_201_CREATED)
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         except IntegrityError:
-            return Response("Exception: Username already exists!")
+            return Response("exception: username already exists!")
 
         except Exception as e:
-            return Response({'Exception': str(e)})
+            return Response({'exception': str(e)})
 
 
 class Login(APIView):
@@ -41,10 +40,10 @@ class Login(APIView):
                 token = jwt.encode({"id": user.id}, 'secret', algorithm='HS256')
                 return Response({"token": token})
             else:
-                return Response("username or password is wrong..!", status=status.HTTP_400_BAD_REQUEST)
+                return Response({'message': "username or password is wrong..!"}, status=status.HTTP_400_BAD_REQUEST)
 
         except AuthenticationFailed:
-            return Response("Exception: Authentication failed..", status=status.HTTP_401_UNAUTHORIZED)
+            return Response("exception: Authentication failed..", status=status.HTTP_401_UNAUTHORIZED)
 
         except Exception as e:
-            return Response({'Exception': str(e)})
+            return Response({'exception': str(e)})
